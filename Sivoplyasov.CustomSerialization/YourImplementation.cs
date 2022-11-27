@@ -1,5 +1,6 @@
-﻿using System.Text;
+﻿using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.Json;
+using System.Xml.Linq;
 using SerializerTests.Interfaces;
 using SerializerTests.Nodes;
 
@@ -23,14 +24,32 @@ namespace SerializerTests.Implementations
             return result;
         }
 
-        public async Task<ListNode> Deserialize(Stream s)
+        public async Task<ListNode?> Deserialize(Stream s)
         {
-            throw new NotImplementedException();
+            ListNode result = null;
+
+            if (s.CanRead)
+            {
+                var bytes = new byte[s.Length];
+                var serializedNodes = new Dictionary<int, ListNode>();
+                s.Seek(0, SeekOrigin.Begin);
+
+                await s.ReadAsync(bytes);
+
+                result = await DeserializeInternal(bytes, serializedNodes);
+            }
+            else
+            {
+                throw new ArgumentException($"Error in argument {nameof(s)}: this type of streams is not supports reading");
+            }
+
+            return result;
         }
 
         public async Task Serialize(ListNode head, Stream s)
         {
-            throw new NotImplementedException();
+            var bytes = await SerializeInternal(head, null, s);
+            await s.WriteAsync(bytes);
         }
 
         #region Private methods
@@ -62,47 +81,70 @@ namespace SerializerTests.Implementations
             return result;
         }
 
-        private async Task SerializeInternal(ListNode node, SerializableNode previousNode, Stream s)
+        private async Task<byte[]?> SerializeInternal(ListNode node, SerializableNode? previousNode, Stream s)
         {
-            var nodeToSerialize = new SerializableNode { HashCode = node.GetHashCode(), Data = node.Data };
+            var nodeToSerialize = new SerializableNode { OriginalHashCode = node.GetHashCode(), Data = node.Data };
 
             if (node.Random != null)
                 nodeToSerialize.RandomHashCode = node.Random.GetHashCode();
 
-            if (previousNode != null)
-            {
-                nodeToSerialize.Previous = previousNode;
-                nodeToSerialize.PrevHashCode = previousNode.HashCode;
-            }
-
             if (node.Next != null)
             {
-                nodeToSerialize.NextHashCode = node.Next.GetHashCode();
-                await SerializeInternal(node.Next, nodeToSerialize, s);
+                nodeToSerialize.NextJsonBytes = await SerializeInternal(node.Next, nodeToSerialize, s);
             }
 
-            await JsonSerializer.SerializeAsync(s, nodeToSerialize, typeof(SerializableNode));
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(nodeToSerialize);
+            return bytes;
+        }
+
+        private async Task<ListNode> DeserializeInternal(byte[] bytes, Dictionary<int, ListNode> serializedNodes)
+        {
+            SerializableNode? nextNode = null;
+            var result = new ListNode();
+
+            try
+            {
+                nextNode = JsonSerializer.Deserialize<SerializableNode>(bytes);
+            }
+            catch(Exception ex)
+            {
+                throw new ArgumentException("Invalid data format. Can't deserialize from this stream. See inner exception(s) for details", ex);
+            }
+
+            if (nextNode != null)
+            {
+                result.Data = nextNode.Data;
+                serializedNodes.Add(nextNode.OriginalHashCode, result);
+
+                if (nextNode.NextJsonBytes != null)
+                {
+                    var next = await DeserializeInternal(nextNode.NextJsonBytes, serializedNodes);
+                    result.Next = next;
+                    next.Previous = result;
+                }
+
+                if (nextNode.RandomHashCode.HasValue)
+                    result.Random = serializedNodes[nextNode.RandomHashCode.Value];
+            }
+
+            return result;
         }
 
         #endregion
 
+        #region Private classes
+
         private class SerializableNode
         {
-            public int HashCode { get; set; }
-
-            public SerializableNode? Previous { get; set; }
-
-            public SerializableNode? Next { get; set; }
+            public int OriginalHashCode { get; set; }
 
             public string? Data { get; set; }
 
-            public int? PrevHashCode { get; set; }
-
-            public int? NextHashCode { get; set; }
+            public byte[]? NextJsonBytes { get; set; }
 
             public int? RandomHashCode { get; set; }
-
-            public string? NextJsonContent { get; set; }
         }
+
+        #endregion
     }
 }

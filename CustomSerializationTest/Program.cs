@@ -1,5 +1,6 @@
 ﻿using SerializerTests.Implementations;
 using SerializerTests.Nodes;
+using System.Text;
 
 var eighth = new ListNode
 {
@@ -59,5 +60,11 @@ var head = new ListNode
 JohnSmithSerializer johnSmithSerializer = new JohnSmithSerializer();
 
 var copy = await johnSmithSerializer.DeepCopy(head);
+
+var textStream = new MemoryStream();
+
+await johnSmithSerializer.Serialize(copy, textStream);
+
+var deserializedHead = await johnSmithSerializer.Deserialize(textStream);
 
 Console.ReadLine();
