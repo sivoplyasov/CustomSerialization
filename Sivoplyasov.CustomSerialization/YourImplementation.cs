@@ -24,9 +24,9 @@ namespace SerializerTests.Implementations
             return result;
         }
 
-        public async Task<ListNode?> Deserialize(Stream s)
+        public async Task<ListNode> Deserialize(Stream s)
         {
-            ListNode result = null;
+            ListNode result;
 
             if (s.CanRead)
             {
@@ -54,27 +54,32 @@ namespace SerializerTests.Implementations
 
         #region Private methods
 
-        private async Task<ListNode> MakeCopy(ListNode? prvious, ListNode nodeToCopy, Dictionary<int, ListNode> copedNodes)
+        private async Task<ListNode?> MakeCopy(ListNode? prvious, ListNode nodeToCopy, Dictionary<int, ListNode> copedNodes)
         {
-            var result = new ListNode { Data = nodeToCopy.Data, Previous = prvious };
-            copedNodes.Add(nodeToCopy.GetHashCode(), result);
+            ListNode result = null;
 
-            if (nodeToCopy.Next != null)
-                result.Next = await MakeCopy(result, nodeToCopy.Next, copedNodes);
-
-            var resultHash = result.GetHashCode();
-            copedNodes.Add(resultHash, result);
-
-            if (nodeToCopy.Random != null)
+            if (nodeToCopy != null)
             {
-                if (nodeToCopy.Random == nodeToCopy)
+                result = new ListNode { Data = nodeToCopy.Data, Previous = prvious };
+                copedNodes.Add(nodeToCopy.GetHashCode(), result);
+
+                if (nodeToCopy.Next != null)
+                    result.Next = await MakeCopy(result, nodeToCopy.Next, copedNodes);
+
+                var resultHash = result.GetHashCode();
+                copedNodes.Add(resultHash, result);
+
+                if (nodeToCopy.Random != null)
                 {
-                    result.Random = result;
-                }
-                else
-                {
-                    var randomHash = nodeToCopy.Random.GetHashCode();
-                    result.Random = copedNodes[randomHash];
+                    if (nodeToCopy.Random == nodeToCopy)
+                    {
+                        result.Random = result;
+                    }
+                    else
+                    {
+                        var randomHash = nodeToCopy.Random.GetHashCode();
+                        result.Random = copedNodes[randomHash];
+                    }
                 }
             }
 
@@ -89,10 +94,9 @@ namespace SerializerTests.Implementations
                 nodeToSerialize.RandomHashCode = node.Random.GetHashCode();
 
             if (node.Next != null)
-            {
                 nodeToSerialize.NextJsonBytes = await SerializeInternal(node.Next, nodeToSerialize, s);
-            }
 
+            //"it's allowed to utilize third-party libraries for serializing 1 node" 
             var bytes = JsonSerializer.SerializeToUtf8Bytes(nodeToSerialize);
             return bytes;
         }
@@ -104,9 +108,10 @@ namespace SerializerTests.Implementations
 
             try
             {
+                //"it's allowed to utilize third-party libraries for serializing 1 node"
                 nextNode = JsonSerializer.Deserialize<SerializableNode>(bytes);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ArgumentException("Invalid data format. Can't deserialize from this stream. See inner exception(s) for details", ex);
             }
