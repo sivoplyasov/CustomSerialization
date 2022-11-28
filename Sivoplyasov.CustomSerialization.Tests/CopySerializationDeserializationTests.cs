@@ -10,7 +10,7 @@ namespace Sivoplyasov.CustomSerialization.Tests
 {
     public class CopySerializationDeserializationTests
     {
-        private JohnSmithSerializer _serializer;
+        private SivoplyasovSerializer _serializer;
 
         private ListNode _head10ElementsList;
         private ListNode _head5ElementsList;
@@ -21,7 +21,7 @@ namespace Sivoplyasov.CustomSerialization.Tests
         [SetUp]
         public void Setup()
         {
-            _serializer = new JohnSmithSerializer();
+            _serializer = new SivoplyasovSerializer();
 
             #region 10 elements setup
 

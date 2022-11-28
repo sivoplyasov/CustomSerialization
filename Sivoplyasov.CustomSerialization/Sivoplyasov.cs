@@ -1,16 +1,13 @@
-﻿using System.Runtime.Serialization.Formatters.Binary;
-using System.Text.Json;
-using System.Xml.Linq;
+﻿using System.Text.Json;
 using SerializerTests.Interfaces;
 using SerializerTests.Nodes;
 
 namespace SerializerTests.Implementations
 {
-    //Specify your class\file name and complete implementation.
-    public class JohnSmithSerializer : IListSerializer
+    public class SivoplyasovSerializer : IListSerializer
     {
         //the constructor with no parameters is required and no other constructors can be used.
-        public JohnSmithSerializer()
+        public SivoplyasovSerializer()
         {
             //...
         }
@@ -139,8 +136,14 @@ namespace SerializerTests.Implementations
 
         #region Private classes
 
+        /// <summary>
+        /// Class for internal implementation of the serialization class
+        /// </summary>
         private class SerializableNode
         {
+            /// <summary>
+            /// For resolving of random references after the serialization 
+            /// </summary>
             public int OriginalHashCode { get; set; }
 
             public string? Data { get; set; }
