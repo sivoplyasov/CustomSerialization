@@ -1,6 +1,5 @@
 ﻿using SerializerTests.Implementations;
 using SerializerTests.Nodes;
-using System.Collections.Generic;
 
 namespace Sivoplyasov.CustomSerialization.Tests
 {
@@ -29,7 +28,7 @@ namespace Sivoplyasov.CustomSerialization.Tests
             var tenFifth = new ListNode { Data = "10 elements. Fifth", Next = tenSixth };
             var tenFourth = new ListNode { Data = "10 elements. Fourth", Next = tenFifth };
             var tenThird = new ListNode { Data = "10 elements. Third", Next = tenFourth };
-            var tenSecond = new ListNode { Data = "10 elements. Second", Next = tenThird};
+            var tenSecond = new ListNode { Data = "10 elements. Second", Next = tenThird };
             var tenHead = new ListNode { Data = "10 elements. Head", Next = tenSecond };
 
             tenSecond.Previous = tenHead;
