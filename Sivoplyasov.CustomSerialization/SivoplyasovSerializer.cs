@@ -16,8 +16,6 @@ namespace SerializerTests.Implementations
 
         public async Task<ListNode> DeepCopy(ListNode head)
         {
-            var copedNodes = new Dictionary<int, ListNode>();
-
             var result = await MakeCopy(head);
 
             return result;
@@ -25,19 +23,17 @@ namespace SerializerTests.Implementations
 
         public async Task<ListNode> Deserialize(Stream s)
         {
-            ListNode result;
-
             if (s.CanRead)
             {
                 s.Seek(0, SeekOrigin.Begin);
-                result = await DeserializeInternal(s);
+                var result = await DeserializeInternal(s);
+
+                return result;
             }
             else
             {
                 throw new ArgumentException($"Error in argument {nameof(s)}: this type of streams is not supports reading");
             }
-
-            return result;
         }
 
         public async Task Serialize(ListNode head, Stream s)
